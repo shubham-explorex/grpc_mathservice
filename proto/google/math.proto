@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+option go_package = "math1.v1";
+
+import "google/api/annotations.proto";
+
+message Request {
+    double Num1 = 1;
+    double Num2 = 2;
+}
+
+message Response {
+    int64 result = 1;
+}
+
+service MathService {
+
+    rpc Add(Request) returns (Response){
+        option (google.api.http) = {
+            post: "/v1/add"
+            body: "*"
+        };
+    }
+    
+    
+    rpc Subtract(Request) returns (Response){
+        option (google.api.http) = {
+            post: "/v1/subtract"
+            body: "*"
+        };
+    }
+
+    rpc Multiply(Request) returns (Response){
+        option (google.api.http) = {
+            post: "/v1/multiply"
+            body: "*"
+        };
+    }
+
+    rpc Divide(Request) returns (Response){
+        option (google.api.http) = {
+            post: "/v1/divide"
+            body: "*"
+        };
+    }
+
+}
