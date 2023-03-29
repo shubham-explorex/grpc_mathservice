@@ -2,9 +2,13 @@ package math1_v1
 
 import (
 	context "context"
+	"errors"
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/kelseyhightower/envconfig"
+	"gopkg.in/yaml.v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -40,18 +44,62 @@ type Division struct {
 	Value int64
 }
 
+type SvcConfig struct {
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	DbName   string `yaml:"dbName"`
+	DbUser   string `yaml:"dbUser"`
+	Password string `yaml:"password"`
+}
+
+func getConfig() *SvcConfig {
+	var cfg SvcConfig
+	err := ReadFile("CONFIG_PATH", &cfg)
+	if err != nil {
+		log.Fatalf("error reading config")
+	}
+	return &cfg
+}
+
+func ReadFile(filePath string, cfg interface{}) error {
+	path, found := os.LookupEnv(filePath)
+	if !found {
+		return errors.New("config file not found")
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	ReadEnv(cfg)
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(cfg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReadEnv(cfg interface{}) error {
+	err := envconfig.Process("", cfg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func init() {
 	DatabaseConnection()
 }
 
 func DatabaseConnection() {
-	host := "localhost"
-	port := "3306"
-	dbName := "test"
-	dbUser := "root"
-	password := "test123"
-	dsn := dbUser + ":" + password + "@tcp" + "(" + host + ":" + port + ")/" + dbName + "?" + "parseTime=true&loc=Local"
+
+	cfg := getConfig()
+	fmt.Println("error")
+	fmt.Println(cfg.DbUser)
+	dsn := cfg.DbUser + ":" + cfg.Password + "@tcp" + "(" + cfg.Host + ":" + cfg.Port + ")/" + cfg.DbName + "?" + "parseTime=true&loc=Local"
 	fmt.Println("dsn : ", dsn)
+
 	DB, e = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	DB.AutoMigrate(Addition{})
 	DB.AutoMigrate(Subtraction{})
